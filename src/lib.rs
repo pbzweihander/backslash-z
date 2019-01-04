@@ -4,7 +4,6 @@ use {
     futures::prelude::*,
     howto,
     lazy_static::lazy_static,
-    percent_encoding,
     regex::Regex,
     serde_derive::{Deserialize, Serialize},
     std::str::FromStr,
