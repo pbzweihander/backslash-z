@@ -131,7 +131,7 @@ fn search_air(
         .map_err(|(e, _)| e)
         .and_then({
             let query = query.clone();
-            move |(o, _)| o.ok_or_else(|| RequestError::AddressNotFound(query.clone()).into())
+            move |(o, _)| o.ok_or_else(|| RequestError::AddressNotFound(query).into())
         })
         .or_else({
             let query = query.clone();
