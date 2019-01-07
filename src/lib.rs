@@ -6,7 +6,7 @@ use {
     lazy_static::lazy_static,
     regex::Regex,
     serde_derive::{Deserialize, Serialize},
-    std::str::FromStr,
+    std::{fmt, str::FromStr},
 };
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -31,6 +31,44 @@ pub enum Response {
     Dictionary(daumdic::Search),
     AirPollution(airkorea::AirStatus),
     HowTo(howto::Answer),
+}
+
+impl fmt::Display for Response {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Response::Dictionary(ref search) => {
+                if !search.alternatives.is_empty() {
+                    writeln!(f, "{}", search.alternatives.join(", "))?;
+                }
+                for word in search.words.iter() {
+                    writeln!(f, "{}", word)?;
+                }
+            }
+            Response::AirPollution(ref status) => {
+                if !status.station_address.is_empty() {
+                    writeln!(f, "Station: {}", status.station_address)?;
+                }
+                for pollutant in status.pollutants.iter() {
+                    writeln!(
+                        f,
+                        "{}: {}{} {}",
+                        pollutant.name,
+                        pollutant
+                            .level
+                            .map(|f| f.to_string())
+                            .unwrap_or_else(|| "--".to_string()),
+                        pollutant.unit,
+                        pollutant.grade,
+                    )?;
+                }
+            }
+            Response::HowTo(answer) => {
+                writeln!(f, "Answer from: {}", answer.link)?;
+                write!(f, "{}", answer.instruction)?;
+            }
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone)]
