@@ -11,7 +11,7 @@ use {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Config {
-    daummap_app_key: String,
+    pub daummap_app_key: String,
 }
 
 #[derive(Debug, Fail, PartialEq, Eq)]
