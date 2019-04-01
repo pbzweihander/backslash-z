@@ -46,20 +46,10 @@ impl fmt::Display for Response {
             }
             Response::AirPollution(ref status) => {
                 if !status.station_address.is_empty() {
-                    writeln!(f, "Station: {}", status.station_address)?;
+                    writeln!(f, "{}, {}", status.station_address, status.time)?;
                 }
                 for pollutant in status.pollutants.iter() {
-                    writeln!(
-                        f,
-                        "{}: {}{} {}",
-                        pollutant.name,
-                        pollutant
-                            .level
-                            .map(|f| f.to_string())
-                            .unwrap_or_else(|| "--".to_string()),
-                        pollutant.unit,
-                        pollutant.grade,
-                    )?;
+                    writeln!(f, "{}", pollutant)?;
                 }
             }
             Response::HowTo(answer) => {
@@ -185,24 +175,24 @@ fn search_air(
         })
         .and_then(|(longitude, latitude)| airkorea::search(longitude, latitude))
         .and_then(move |status| {
-            let station_address = status.station_address.clone();
-            let pollutants = match command.as_ref() {
-                "air" => status.pollutants,
-                "pm" => status
-                    .into_iter()
-                    .filter(|p| p.name.contains("PM"))
-                    .collect(),
-                command => status
-                    .into_iter()
-                    .filter(|p| p.name.to_lowercase().contains(&command))
-                    .collect(),
-            };
+            let station_address = status.station_address;
+            let time = status.time;
+            let pollutants: Vec<_> = status
+                .pollutants
+                .into_iter()
+                .filter(|p| {
+                    command == "air"
+                        || (p.name == "PM2.5" && command == "pm25")
+                        || p.name.to_lowercase().contains(&command)
+                })
+                .collect();
 
             if pollutants.is_empty() {
                 Err(RequestError::InvalidAirkoreaCommand(command).into())
             } else {
                 Ok(airkorea::AirStatus {
                     station_address,
+                    time,
                     pollutants,
                 })
             }
